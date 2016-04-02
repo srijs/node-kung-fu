@@ -1,11 +1,15 @@
-export class Pair<X, Y> {
-  constructor(public first: X, public second: Y) {}
+export class Pair<A, B> {
+  constructor(public first: A, public second: B) {}
 
-  mapFirst<Z>(f: (x: X) => Z): Pair<Z, Y> {
-    return new Pair(f(this.first), this.second);
+  mapFirst<C>(f: (first: A) => C): Pair<C, B> {
+    return this.map(f, b => b);
   }
 
-  mapSecond<Z>(f: (x: Y) => Z): Pair<X, Z> {
-    return new Pair(this.first, f(this.second));
+  mapSecond<C>(f: (second: B) => C): Pair<A, C> {
+    return this.map(a => a, f);
+  }
+
+  map<C, D>(f: (first: A) => C, g: (second: B) => D): Pair<C, D> {
+    return new Pair(f(this.first), g(this.second));
   }
 }
