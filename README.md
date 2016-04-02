@@ -19,8 +19,6 @@ npm install kung-fu
 
 Option can be used to represent an optional value, without having to resort to `null` and `undefined`. It can be empty, or contain a value of type T.
 
-#### Example
-
 ```typescript
 function zeroAsDefault(maybeNumber: Option<number>) {
   return maybeNumber.caseOf({
@@ -36,8 +34,6 @@ zeroAsDefault(Option.none<number>()) // == 0
 ### Either<L, R>
 
 Either can be used to represent a result with two different outcomes, e.g. error or success.
-
-#### Example
 
 ```typescript
 function doSomethingDangerous(lucky: boolean): Either<Error, String> {
