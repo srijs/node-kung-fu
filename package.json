@@ -1,6 +1,6 @@
 {
   "name": "kung-fu",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Functional Standard Library",
   "main": "out/index.js",
   "scripts": {
