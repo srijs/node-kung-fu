@@ -1,59 +1,72 @@
 import {Either} from './either';
 
+export type OptionPattern<T, X> = {
+  none: () => X,
+  some: (t: T) => X
+}
+
 export class Option<T> {
-  constructor(public fold: <X>(nil: () => X, cons: (t: T) => X) => X) {}
+  constructor(public caseOf: <X>(pattern: OptionPattern<T, X>) => X) {}
 
   static some<T>(t: T): Option<T> {
-    return new Option(<X>(nil: X, cons: (t: T) => X) => cons(t));
+    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => pattern.some(t));
   }
 
   static none<T>(): Option<T> {
-    return new Option(<X>(nil: X, cons: (t: T) => X) => nil);
+    return new Option(<X>(pattern: OptionPattern<T, X>) => pattern.none());
   }
 
   isDefined(): boolean {
-    return this.fold(() => false, _ => true);
+    return this.caseOf({
+      none: () => false,
+      some: () => true
+    });
   }
 
   isEmpty(): boolean {
-    return this.fold(() => true, _ => false);
+    return this.caseOf({
+      none: () => true,
+      some: () => false
+    });
   }
 
   get(): T {
-    return this.fold<T>(function (): T {
-      throw new TypeError('option is empty');
-    }, t => t);
+    return this.caseOf({
+      none: (): T => {
+        throw new TypeError('option is empty');
+      },
+      some: (t) => t
+    });
   }
 
   map<U>(f: (t: T) => U): Option<U> {
-    if (this.isDefined()) {
-      return Option.some(f(this.get()));
-    } else {
-      return Option.none<U>();
-    }
+    return this.caseOf({
+      some: (t) => Option.some(f(t)),
+      none: () => Option.none<U>()
+    });
   }
 
   map2<U, X>(other: Option<U>, f: (t: T, u: U) => X): Option<X> {
-    if (this.isDefined() && other.isDefined()) {
-      return Option.some(f(this.get(), other.get()));
-    } else {
-      return Option.none<X>();
-    }
+    return this.caseOf({
+      none: () => Option.none<X>(),
+      some: (t) => other.caseOf({
+        none: () => Option.none<X>(),
+        some: (u) => Option.some(f(t, u))
+      })
+    });
   }
 
   flatMap<U>(f: (t: T) => Option<U>): Option<U> {
-    if (this.isDefined()) {
-      return f(this.get());
-    } else {
-      return Option.none<U>();
-    }
+    return this.caseOf({
+      none: () => Option.none<U>(),
+      some: (t) => f(t)
+    });
   }
 
   toEither<L>(l: L): Either<L, T> {
-    if (this.isDefined()) {
-      return Either.right<L, T>(this.get());
-    } else {
-      return Either.left<L, T>(l);
-    }
+    return this.caseOf({
+      none: () => Either.left<L, T>(l),
+      some: (t) => Either.right<L, T>(t)
+    });
   }
 }

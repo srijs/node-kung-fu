@@ -1,42 +1,58 @@
 import {Option} from './option';
 
+export type EitherPattern<L, R, X> = {
+  left: (l: L) => X,
+  right: (r: R) => X
+}
+
 export class Either<L, R> {
-  constructor(public choose: <X>(lf: (l: L) => X, rf: (r: R) => X) => X) {}
+  constructor(public caseOf: <X>(pattern: EitherPattern<L, R, X>) => X) {}
 
   static left<L, R>(l: L): Either<L, R> {
-    return new Either(<X>(lf: (l: L) => X, rf: (r: R) => X) => lf(l));
+    return new Either(<X>(pattern: EitherPattern<L, R, X>) => pattern.left(l));
   }
 
   static right<L, R>(r: R): Either<L, R> {
-    return new Either(<X>(lf: (l: L) => X, rf: (r: R) => X) => rf(r));
+    return new Either(<X>(pattern: EitherPattern<L, R, X>) => pattern.right(r));
   }
 
   isLeft(): boolean {
-    return this.choose(() => true, () => false);
+    return this.caseOf({
+      left: () => true,
+      right: () => false
+    });
   }
 
   isRight(): boolean {
-    return this.choose(() => false, () => true);
+    return this.caseOf({
+      left: () => false,
+      right: () => true
+    });
   }
 
   getLeft(): L {
-    return this.choose(l => l, (): L => {
-      throw new TypeError('left is empty');
+    return this.caseOf({
+      left: (l) => l,
+      right: (): L => {
+        throw new TypeError('left is empty');
+      }
     });
   }
 
   getRight(): R {
-    return this.choose((): R => {
-      throw new TypeError('right is empty');
-    }, r => r);
+    return this.caseOf({
+      left: (): R => {
+        throw new TypeError('right is empty');
+      },
+      right: (r) => r
+    });
   }
 
   map<X, Y>(mapL: (l: L) => X, mapR: (r: R) => Y): Either<X, Y> {
-    if (this.isLeft()) {
-      return Either.left<X, Y>(mapL(this.getLeft()));
-    } else {
-      return Either.right<X, Y>(mapR(this.getRight()));
-    }
+    return this.caseOf({
+      left: (l) => Either.left<X, Y>(mapL(l)),
+      right: (r) => Either.right<X, Y>(mapR(r))
+    });
   }
 
   mapLeft<X>(mapL: (l: L) => X): Either<X, R> {
@@ -48,10 +64,9 @@ export class Either<L, R> {
   }
 
   toOption(): Option<R> {
-    if (this.isRight()) {
-      return Option.some(this.getRight());
-    } else {
-      return Option.none<R>();
-    }
+    return this.caseOf({
+      left: () => Option.none<R>(),
+      right: (r) => Option.some(r)
+    });
   }
 }
