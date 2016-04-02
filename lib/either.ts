@@ -20,13 +20,13 @@ export class Either<L, R> {
   }
 
   getLeft(): L {
-    return this.choose(l => l, function (): L {
+    return this.choose(l => l, (): L => {
       throw new TypeError('left is empty');
     });
   }
 
   getRight(): R {
-    return this.choose(function (): R {
+    return this.choose((): R => {
       throw new TypeError('right is empty');
     }, r => r);
   }
