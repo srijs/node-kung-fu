@@ -1,7 +1,7 @@
 {
-  "name": "kung-fu-tse",
-  "version": "0.0.1",
-  "description": "Functional Extensions",
+  "name": "kung-fu",
+  "version": "0.0.2",
+  "description": "Functional Standard Library",
   "main": "out/index.js",
   "scripts": {
     "build": "tsc",
@@ -11,13 +11,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:srijs/node-kung-fu-tse.git"
+    "url": "git@github.com:srijs/node-kung-fu.git"
   },
   "devDependencies": {
     "typescript": "^1.8.7"
   },
   "typings": "./out/index.d.ts",
   "bugs": {
-    "url" : "https://github.com/srijs/node-kung-fu-tse/issues"
+    "url" : "https://github.com/srijs/node-kung-fu/issues"
   }
 }
