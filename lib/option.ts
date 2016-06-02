@@ -31,6 +31,13 @@ export class Option<T> {
     });
   }
 
+  getOr(def: T): T {
+    return this.caseOf({
+      none: () => def,
+      some: (t: T) => t
+    });
+  }
+
   get(): T {
     return this.caseOf({
       none: (): T => {
