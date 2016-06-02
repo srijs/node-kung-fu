@@ -1,25 +1,45 @@
 import {Option} from './option';
 
-export type PartialFunction<From, To> = (from: From) => Option<To>;
+export class PartialFunction<From, To> {
+  constructor(public call: (from: From) => Option<To>) {}
 
-export module PartialFunction {
-  export function empty<From, To>(from: From) {
-    return Option.none<To>();
+  static empty<From, To>(): PartialFunction<From, To> {
+    return new PartialFunction<From, To>((from: From) => Option.none<To>());
   }
 
-  export function compose<From, To>(
-    f: PartialFunction<From, To>,
-    g: PartialFunction<From, To>
-  ): PartialFunction<From, To> {
-    return (from: From) => f(from).caseOf<Option<To>>({
+  static identity<T>(): PartialFunction<T, T> {
+    return new PartialFunction((t: T) => Option.some(t));
+  }
+
+  and(other: PartialFunction<From, To>): PartialFunction<From, To> {
+    return new PartialFunction((from: From) => this.call(from).caseOf<Option<To>>({
       some: (to) => Option.some(to),
-      none: () => g(from)
+      none: () => other.call(from)
+    }));
+  }
+
+  compose<Result>(other: PartialFunction<To, Result>): PartialFunction<From, Result> {
+    return new PartialFunction((from: From) => this.call(from).flatMap(to => other.call(to)));
+  }
+
+  map<Result>(f: (to: To) => Result): PartialFunction<From, Result> {
+    return new PartialFunction((from: From) => {
+      return this.call(from).map(f);
     });
   }
 
-  export function concat<From, To>(
+  static concat<From, To>(
     fs: Array<PartialFunction<From, To>>
   ): PartialFunction<From, To> {
-    return fs.reduce<PartialFunction<From, To>>(PartialFunction.compose, PartialFunction.empty);
+    return fs.reduce((f, g) => f.and(g), PartialFunction.empty<From, To>());
+  }
+
+  static asInstanceOf<T>(con: {new(...args: any[]): T}): PartialFunction<Object, T> {
+    return new PartialFunction((from: Object) => {
+      if (from instanceof con) {
+        return Option.some(from);
+      }
+      return Option.none<T>();
+    });
   }
 }
