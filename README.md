@@ -15,7 +15,7 @@ npm install kung-fu
 
 ## Features
 
-### Option<T>
+### `Option<T>`
 
 Option can be used to represent an optional value, without having to resort to `null` and `undefined`. It can be empty, or contain a value of type T.
 
@@ -31,7 +31,7 @@ zeroAsDefault(Option.some(42)) // == 42
 zeroAsDefault(Option.none<number>()) // == 0
 ```
 
-### Either<L, R>
+### `Either<L, R>`
 
 Either can be used to represent a result with two different outcomes, e.g. error or success.
 
@@ -48,7 +48,7 @@ doSomethingDangerous(true) // == Either.right('wow, it worked. lucky you!');
 doSomethingDangerous(true).flatMap(msg => doSomethingDangerous(false)) // == Either.left(new Error('uh oh!'))
 ```
 
-### Pair<A, B>
+### `Pair<A, B>`
 
 Pair can be used to represent a heterogenous tuple of two values.
 
@@ -58,7 +58,7 @@ const twoThings = new Pair('one thing', 42);
 twoThings.mapFirst(str => str + '!') // == new Pair('one thing!', 42);
 ```
 
-### List<T>
+### `List<T>`
 
 List is an immutable list, backed by a native array;
 
@@ -66,4 +66,14 @@ List is an immutable list, backed by a native array;
 const myList = List.fromArray(['5', '12', '42']);
 
 myList.map(thing => parseInt(thing)).foldLeft((sum, value) => sum + value) // == 59
+```
+
+### `PartialFunction<From, To>`
+
+A partial function from `From` to `To`.
+
+```typescript
+const partial = PartialFunction.asInstanceOf(Number).map(n => n + 1);
+
+partial.call(42).getOr(0);
 ```
