@@ -1,11 +1,12 @@
 {
   "name": "kung-fu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Functional Standard Library",
   "main": "out/index.js",
   "scripts": {
     "build": "tsc",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "test": "mocha out/**/*-spec.js --recursive"
   },
   "author": "Sam Rijs",
   "license": "MIT",
@@ -14,10 +15,13 @@
     "url": "git@github.com:srijs/node-kung-fu.git"
   },
   "devDependencies": {
-    "typescript": "^1.8.7"
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3",
+    "typescript": "^1.8.7",
+    "typings": "^1.0.4"
   },
   "typings": "./out/index.d.ts",
   "bugs": {
-    "url" : "https://github.com/srijs/node-kung-fu/issues"
+    "url": "https://github.com/srijs/node-kung-fu/issues"
   }
 }

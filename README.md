@@ -38,9 +38,9 @@ Either can be used to represent a result with two different outcomes, e.g. error
 ```typescript
 function doSomethingDangerous(lucky: boolean): Either<Error, String> {
   if (!lucky) {
-    return Either.left(new Error('uh oh!'));
+    return Either.left<Error, String>(new Error('uh oh!'));
   } else {
-    return Either.right('wow, it worked. lucky you!');
+    return Either.right<Error, String>('wow, it worked. lucky you!');
   }
 }
 
