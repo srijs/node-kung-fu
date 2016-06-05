@@ -63,6 +63,28 @@ export class Either<L, R> {
     return this.map(l => l, mapR);
   }
 
+  flatMapRight<X>(f: (val: R) => Either<L, X>): Either<L, X> {
+    return this.caseOf({
+      left: (lval: L) => {
+        return Either.left<L, X>(lval);
+      },
+      right: (rval: R) => {
+        return f(rval);
+      }
+    })
+  }
+
+  flatMapLeft<X>(f: (val: L) => Either<X, R>): Either<X, R> {
+    return this.caseOf({
+      left: (lval: L) => {
+        return f(lval);
+      },
+      right: (rval: R) => {
+        return Either.right<X, R>(rval);
+      }
+    })
+  }
+
   toOption(): Option<R> {
     return this.caseOf({
       left: () => Option.none<R>(),
