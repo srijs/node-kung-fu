@@ -4,7 +4,7 @@
   "description": "Functional Standard Library",
   "main": "out/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "typings install && tsc",
     "prepublish": "npm run build",
     "test": "mocha out/**/*-spec.js --recursive"
   },
