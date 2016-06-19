@@ -58,16 +58,6 @@ const twoThings = new Pair('one thing', 42);
 twoThings.mapFirst(str => str + '!') // == new Pair('one thing!', 42);
 ```
 
-### `List<T>`
-
-List is an immutable list, backed by a native array;
-
-```typescript
-const myList = List.fromArray(['5', '12', '42']);
-
-myList.map(thing => parseInt(thing)).foldLeft((sum, value) => sum + value) // == 59
-```
-
 ### `PartialFunction<From, To>`
 
 A partial function from `From` to `To`.
