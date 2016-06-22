@@ -12,6 +12,9 @@ export class Option<T> {
     return new Option<T>(<X>(pattern: OptionPattern<T, X>) => pattern.some(t));
   }
 
+  static empty: Option<any> =
+    new Option(<X>(pattern: OptionPattern<any, X>) => pattern.none());
+
   static none<T>(): Option<T> {
     return new Option(<X>(pattern: OptionPattern<T, X>) => pattern.none());
   }
