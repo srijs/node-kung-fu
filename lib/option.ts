@@ -1,5 +1,4 @@
 import {Either} from './either';
-import {List} from './list';
 
 export type OptionPattern<T, X> = {
   none: () => X,
@@ -78,10 +77,10 @@ export class Option<T> {
     });
   }
 
-  toList(): List<T> {
+  toArray(): Array<T> {
     return this.caseOf({
-      none: () => List.empty<T>(),
-      some: (t) => List.singleton(t)
+      none: () => [],
+      some: (t) => [t]
     });
   }
 }
