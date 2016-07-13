@@ -13,10 +13,15 @@ export class Option<T> {
   }
 
   static empty: Option<any> =
-    new Option(<X>(pattern: OptionPattern<any, X>) => pattern.none());
+    Option.none<any>();
 
   static none<T>(): Option<T> {
     return new Option(<X>(pattern: OptionPattern<T, X>) => pattern.none());
+  }
+
+  static option<T>(f: () => T): Option<T> {
+    const val = f();
+    return val ? Option.some(val) : Option.empty;
   }
 
   isDefined(): boolean {
@@ -35,8 +40,8 @@ export class Option<T> {
 
   getOr(def: T): T {
     return this.caseOf({
-      none: () => def,
-      some: (t: T) => t
+      none: ()  => def,
+      some: (t) => t
     });
   }
 
@@ -45,22 +50,22 @@ export class Option<T> {
       none: (): T => {
         throw new TypeError('option is empty');
       },
-      some: (t) => t
+      some: (t)   => t
     });
   }
 
   map<U>(f: (t: T) => U): Option<U> {
     return this.caseOf({
-      some: (t) => Option.some(f(t)),
-      none: () => Option.none<U>()
+      none: ()  => Option.empty,
+      some: (t) => Option.some(f(t))
     });
   }
 
   map2<U, X>(other: Option<U>, f: (t: T, u: U) => X): Option<X> {
     return this.caseOf({
-      none: () => Option.none<X>(),
+      none: ()  => Option.empty,
       some: (t) => other.caseOf({
-        none: () => Option.none<X>(),
+        none: ()  => Option.empty,
         some: (u) => Option.some(f(t, u))
       })
     });
@@ -68,21 +73,36 @@ export class Option<T> {
 
   flatMap<U>(f: (t: T) => Option<U>): Option<U> {
     return this.caseOf({
-      none: () => Option.none<U>(),
+      none: ()  => Option.empty,
       some: (t) => f(t)
     });
   }
 
+  filter(pred: (t: T) => boolean): Option<T> {
+    return this.caseOf({
+      none: ()  => Option.empty,
+      some: (t) => pred(t) ? this : Option.empty
+    });
+  }
+
+  truthy(): Option<T> {
+    return this.filter(v => !!v);
+  }
+
+  reduce<U>(f: (t: T) => U, init: U): U {
+    return this.map(f).getOr(init);
+  }
+
   toEither<L>(l: L): Either<L, T> {
     return this.caseOf({
-      none: () => Either.left<L, T>(l),
+      none: ()  => Either.left<L, T>(l),
       some: (t) => Either.right<L, T>(t)
     });
   }
 
   toArray(): Array<T> {
     return this.caseOf({
-      none: () => [],
+      none: ()  => [],
       some: (t) => [t]
     });
   }
