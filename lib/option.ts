@@ -89,8 +89,15 @@ export class Option<T> {
     return this.filter(v => !!v);
   }
 
-  reduce<U>(f: (t: T) => U, init: U): U {
-    return this.map(f).getOr(init);
+  reduce<U>(f: (u: U, t: T) => U, init: U): U {
+    return this.map(t => f(init, t)).getOr(init);
+  }
+
+  orElse<U extends T>(other: () => Option<U>): Option<T> {
+    return this.caseOf<Option<T>>({
+      none: () => other(),
+      some: () => this
+    });
   }
 
   toEither<L>(l: L): Either<L, T> {
