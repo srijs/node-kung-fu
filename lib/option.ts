@@ -45,6 +45,13 @@ export class Option<T> {
     });
   }
 
+  getOrLazy(def: () => T): T {
+    return this.caseOf({
+      none: ()  => def(),
+      some: (t) => t
+    });
+  }
+
   get(): T {
     return this.caseOf({
       none: (): T => {
@@ -90,13 +97,44 @@ export class Option<T> {
   }
 
   reduce<U>(f: (u: U, t: T) => U, init: U): U {
-    return this.map(t => f(init, t)).getOr(init);
+    return this.caseOf({
+      none: ()  => init,
+      some: (t) => f(init, t)
+    });
   }
 
-  orElse<U extends T>(other: () => Option<U>): Option<T> {
+  orElse<U extends T>(other: Option<U>): Option<T> {
+    return this.caseOf<Option<T>>({
+      none: () => other,
+      some: () => this
+    });
+  }
+
+  orElseLazy<U extends T>(other: () => Option<U>): Option<T> {
     return this.caseOf<Option<T>>({
       none: () => other(),
       some: () => this
+    });
+  }
+
+  forEach(f: (t: T) => void): void {
+    this.caseOf({
+      none: ()  => {},
+      some: (t) => f(t)
+    });
+  }
+
+  cata<U>(f: (t: T) => U, def: U): U {
+    return this.caseOf({
+      none: ()  => def,
+      some: (t) => f(t)
+    });
+  }
+
+  cataLazy<U>(f: (t: T) => U, def: () => U): U {
+    return this.caseOf({
+      none: ()  => def(),
+      some: (t) => f(t)
     });
   }
 
