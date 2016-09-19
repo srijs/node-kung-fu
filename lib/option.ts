@@ -151,4 +151,8 @@ export class Option<T> {
       some: (t) => [t]
     });
   }
+
+  static filter<T>(arr: Array<Option<T>>): Array<T> {
+    return arr.filter(op => op.isDefined()).map(op => op.get());
+  }
 }
