@@ -34,7 +34,7 @@ describe('Either', () => {
       left: (lval) => {
         chai.expect(lval).to.be.deep.equal(new Error('err'));
       },
-      right: (rval) => {
+      right: () => {
         throw new Error('should not have reached the right branch');
       }
     });
@@ -43,7 +43,7 @@ describe('Either', () => {
   it('pattern matches on the right value of an either', () => {
     const e = fixtureErrOk(false);
     e.caseOf({
-      left: (lval) => {
+      left: () => {
         throw new Error('should not have reached the left branch');
       },
       right: (rval) => {
@@ -56,7 +56,7 @@ describe('Either', () => {
     const rightOnlyEither = Either.right<void, string>('ok');
     const e = rightOnlyEither.mapRight((val) => val.length);
     e.caseOf({
-      left: (lval) => {
+      left: () => {
         throw new Error('should not have reached the left branch');
       },
       right: (rval) => {
@@ -69,13 +69,13 @@ describe('Either', () => {
     const rightOnlyEither = Either.right<void, string>('hello');
     const e = rightOnlyEither.flatMapRight((val) => Either.right<void, string>(`${val} world`));
     e.caseOf({
-      left: (lval) => {
+      left: () => {
         throw new Error('should not have reached left branch');
       },
       right: (rval) => {
         chai.expect(rval).to.be.equal('hello world');
       }
-    })
+    });
   });
 
   it('#flatMapLeft maps and flattens the value on the left into another either', () => {
@@ -85,10 +85,10 @@ describe('Either', () => {
       left: (lval) => {
         chai.expect(lval).to.be.equal('hello world');
       },
-      right: (rval) => {
+      right: () => {
         throw new Error('should not have reached right branch');
       }
-    })
+    });
   });
 
 });

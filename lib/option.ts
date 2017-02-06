@@ -3,25 +3,55 @@ import {Either} from './either';
 export type OptionPattern<T, X> = {
   none: () => X,
   some: (t: T) => X
-}
+};
 
 export class Option<T> {
+
   constructor(public caseOf: <X>(pattern: OptionPattern<T, X>) => X) {}
 
   static some<T>(t: T): Option<T> {
-    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => pattern.some(t));
+    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => {
+      return pattern.some(t);
+    });
   }
 
-  static empty: Option<any> =
-    Option.none<any>();
+  static someLazy<T>(f: () => T): Option<T> {
+    let memoize: T;
+    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => {
+      if (!memoize) {
+        memoize = f();
+      }
+      return pattern.some(memoize);
+    });
+  }
 
   static none<T>(): Option<T> {
     return new Option(<X>(pattern: OptionPattern<T, X>) => pattern.none());
   }
 
-  static option<T>(f: () => T): Option<T> {
-    const val = f();
-    return val ? Option.some(val) : Option.empty;
+  static empty: Option<never> =
+    Option.none<never>();
+
+  static option<T>(t: T): Option<T> {
+    return t ? Option.some(t) : Option.empty;
+  }
+
+  static optionLazy<T>(f: () => T): Option<T> {
+    let memoize: Option<T>;
+    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => {
+      if (!memoize) {
+        const t = f();
+        if (t) {
+          memoize = Option.some(t);
+        } else {
+          memoize = Option.empty;
+        }
+      }
+      return memoize.caseOf({
+        some: (val) => pattern.some(val),
+        none: () => pattern.none()
+      });
+    });
   }
 
   isDefined(): boolean {
@@ -38,15 +68,15 @@ export class Option<T> {
     });
   }
 
-  getOr(def: T): T {
-    return this.caseOf({
+  getOr<U>(def: U): T | U {
+    return this.caseOf<T | U>({
       none: ()  => def,
       some: (t) => t
     });
   }
 
-  getOrLazy(def: () => T): T {
-    return this.caseOf({
+  getOrLazy<U>(def: () => U): T | U {
+    return this.caseOf<T | U>({
       none: ()  => def(),
       some: (t) => t
     });
@@ -64,7 +94,7 @@ export class Option<T> {
   map<U>(f: (t: T) => U): Option<U> {
     return this.caseOf({
       none: ()  => Option.empty,
-      some: (t) => Option.some(f(t))
+      some: (t) => Option.some<U>(f(t))
     });
   }
 
@@ -73,7 +103,7 @@ export class Option<T> {
       none: ()  => Option.empty,
       some: (t) => other.caseOf({
         none: ()  => Option.empty,
-        some: (u) => Option.some(f(t, u))
+        some: (u) => Option.option(f(t, u))
       })
     });
   }
@@ -90,6 +120,10 @@ export class Option<T> {
       none: ()  => Option.empty,
       some: (t) => pred(t) ? this : Option.empty
     });
+  }
+
+  keep(pred: boolean): Option<T> {
+    return pred ? this : Option.empty;
   }
 
   truthy(): Option<T> {
@@ -149,6 +183,16 @@ export class Option<T> {
     return this.caseOf({
       none: ()  => [],
       some: (t) => [t]
+    });
+  }
+
+  static flatten<T>(op: Option<T | Option<T>>): Option<T> {
+    return op.flatMap(ot => {
+      if (ot instanceof Option) {
+        return ot;
+      } else {
+        return Option.option(ot);
+      }
     });
   }
 }
