@@ -4,11 +4,11 @@ export class PartialFunction<From, To> {
   constructor(public call: (from: From) => Option<To>) {}
 
   static empty<From, To>(): PartialFunction<From, To> {
-    return new PartialFunction<From, To>((from: From) => Option.none<To>());
+    return new PartialFunction<From, To>(() => Option.none<To>());
   }
 
   static identity<T>(): PartialFunction<T, T> {
-    return new PartialFunction((t: T) => Option.some(t));
+    return new PartialFunction((t: T) => Option.option(t));
   }
 
   and(other: PartialFunction<From, To>): PartialFunction<From, To> {

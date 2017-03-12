@@ -3,7 +3,7 @@ import {Option} from './option';
 export type EitherPattern<L, R, X> = {
   left: (l: L) => X,
   right: (r: R) => X
-}
+};
 
 export class Either<L, R> {
   constructor(public caseOf: <X>(pattern: EitherPattern<L, R, X>) => X) {}
@@ -71,7 +71,7 @@ export class Either<L, R> {
       right: (rval: R) => {
         return f(rval);
       }
-    })
+    });
   }
 
   flatMapLeft<X>(f: (val: L) => Either<X, R>): Either<X, R> {
@@ -82,7 +82,7 @@ export class Either<L, R> {
       right: (rval: R) => {
         return Either.right<X, R>(rval);
       }
-    })
+    });
   }
 
   toOption(): Option<R> {
