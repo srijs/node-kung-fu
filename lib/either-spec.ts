@@ -65,6 +65,45 @@ describe('Either', () => {
     });
   });
 
+  it('#mapRight keeps the value on the left of an either', () => {
+    const leftOnlyEither = Either.left<number, string>(3);
+    const e = leftOnlyEither.mapRight((val) => val.length);
+    e.caseOf({
+      left: (lval) => {
+        chai.expect(lval).to.be.equal(3);
+      },
+      right: () => {
+        throw new Error('should not have reached the left branch');
+      }
+    });
+  });
+
+  it('#mapLeft maps the value on the left of an either', () => {
+    const leftOnlyEither = Either.left<number, never>(3);
+    const e = leftOnlyEither.mapLeft((val) => val * 2);
+    e.caseOf({
+      left: (lval) => {
+        chai.expect(lval).to.be.equal(3 * 2);
+      },
+      right: () => {
+        throw new Error('should not have reached the left branch');
+      }
+    });
+  });
+
+  it('#mapLeft keeps the value on the right of an either', () => {
+    const rightOnlyEither = Either.right<number, string>('ok');
+    const e = rightOnlyEither.mapLeft((val) => val * 2);
+    e.caseOf({
+      left: () => {
+        throw new Error('should not have reached the left branch');
+      },
+      right: (rval) => {
+        chai.expect(rval).to.be.equal('ok');
+      }
+    });
+  });
+
   it('#flatMapRight maps and flattens the value on the right into another either', () => {
     const rightOnlyEither = Either.right<void, string>('hello');
     const e = rightOnlyEither.flatMapRight((val) => Either.right<void, string>(`${val} world`));
@@ -78,6 +117,19 @@ describe('Either', () => {
     });
   });
 
+  it('#flatMapRight keeps the value on the left of an either', () => {
+    const leftOnlyEither = Either.left<number, string>(3);
+    const e = leftOnlyEither.flatMapRight((val) => Either.right<number, string>(`${val} world`));
+    e.caseOf({
+      left: (lval) => {
+        chai.expect(lval).to.be.equal(3);
+      },
+      right: () => {
+        throw new Error('should not have reached the left branch');
+      }
+    });
+  });
+
   it('#flatMapLeft maps and flattens the value on the left into another either', () => {
     const leftOnlyEither = Either.left<string, void>('hello');
     const e = leftOnlyEither.flatMapLeft((val) => Either.left<string, void>(`${val} world`));
@@ -87,6 +139,42 @@ describe('Either', () => {
       },
       right: () => {
         throw new Error('should not have reached right branch');
+      }
+    });
+  });
+
+  it('#flatMapLeft keeps the value on the right of an either', () => {
+    const rightOnlyEither = Either.right<number, string>('ok');
+    const e = rightOnlyEither.flatMapLeft((val) => Either.left<number, string>(val * 2));
+    e.caseOf({
+      left: () => {
+        throw new Error('should not have reached the left branch');
+      },
+      right: (rval) => {
+        chai.expect(rval).to.be.equal('ok');
+      }
+    });
+  });
+
+  it('#toOption keeps the right side', () => {
+    const rightOnlyEither = Either.right<number, string>('ok');
+    rightOnlyEither.toOption().caseOf({
+      none: () => {
+        throw new Error('should not have reached the none branch');
+      },
+      some: (val) => {
+        chai.expect(val).to.be.equal('ok');
+      }
+    });
+  });
+
+  it('#toOption discards the left side', () => {
+    const leftOnlyEither = Either.left<number, string>(3);
+    leftOnlyEither.toOption().caseOf({
+      none: () => {
+      },
+      some: () => {
+        throw new Error('should not have reached the none branch');
       }
     });
   });

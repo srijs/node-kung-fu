@@ -6,7 +6,7 @@ export type EitherPattern<L, R, X> = {
 };
 
 export class Either<L, R> {
-  constructor(public caseOf: <X>(pattern: EitherPattern<L, R, X>) => X) {}
+  constructor(private readonly _caseOf: <X>(pattern: EitherPattern<L, R, X>) => X) {}
 
   static left<L, R>(l: L): Either<L, R> {
     return new Either(<X>(pattern: EitherPattern<L, R, X>) => pattern.left(l));
@@ -14,6 +14,10 @@ export class Either<L, R> {
 
   static right<L, R>(r: R): Either<L, R> {
     return new Either(<X>(pattern: EitherPattern<L, R, X>) => pattern.right(r));
+  }
+
+  caseOf<X>(pattern: EitherPattern<L, R, X>): X {
+    return this._caseOf(pattern);
   }
 
   isLeft(): boolean {

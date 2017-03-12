@@ -5,7 +5,7 @@
     "no-var-requires": true,
     "indent": [true, "spaces"],
     "curly": true,
-    "no-any": false,
+    "no-any": true,
     "no-require-imports": true,
     "semicolon": true,
     "triple-equals": true,
@@ -13,6 +13,11 @@
     "no-switch-case-fall-through": true,
     "no-unused-expression": true,
     "no-trailing-whitespace": true,
-    "switch-default": true
-  }
+    "switch-default": true,
+    "eofline": true,
+    "mocha-avoid-only": true
+  },
+  "rulesDirectory": [
+    "node_modules/tslint-microsoft-contrib"
+  ]
 }

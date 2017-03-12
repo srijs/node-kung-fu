@@ -78,4 +78,25 @@ describe('PartialFunction', () => {
 
   });
 
+  describe('Concat', () => {
+
+    it('behaves like and for an array of partial functions', () => {
+      const condition1 = new PartialFunction<number, number>(n => Option.some(n).filter(x => x % 2 === 0));
+      const condition2 = new PartialFunction<number, number>(n => Option.some(n).filter(x => x % 3 === 0));
+      const condition3 = new PartialFunction<number, number>(n => Option.some(n).filter(x => x % 5 === 0));
+      const conditions = PartialFunction.concat([condition1, condition2, condition3]);
+      equals(Option.some(2), conditions.call(2));
+      equals(Option.some(3), conditions.call(3));
+      equals(Option.some(5), conditions.call(5));
+      equals(Option.some(4), conditions.call(4));
+      equals(Option.some(9), conditions.call(9));
+      equals(Option.some(10), conditions.call(10));
+      equals(Option.some(30), conditions.call(30));
+      equals(Option.empty, conditions.call(1));
+      equals(Option.empty, conditions.call(7));
+      equals(Option.empty, conditions.call(11));
+    });
+
+  });
+
 });

@@ -12,6 +12,10 @@ describe('Option', () => {
     equals(Option.some([6, 'ok']), Option.some<[number, string]>([3, 'ok']).map(tuple => [tuple[0] * 2, tuple[1]]));
   });
 
+  it('correctly maps empty values', () => {
+    equals(Option.empty, Option.empty.map(x => x));
+  });
+
   describe('map2', () => {
 
     it('calls function when both options have a value', () => {
@@ -36,7 +40,7 @@ describe('Option', () => {
 
     it('calls function when there is a value', () => {
       const op = Option.some(3);
-      chai.expect(Option.some(4).flatMap(() => op)).to.equals(op);
+      equals(op, Option.some(4).flatMap(() => op));
     });
 
     it('does not call function when there is no value', () => {
@@ -57,12 +61,12 @@ describe('Option', () => {
   });
 
   it('optionLazy does not execute if not needed', () => {
-    let x = 0;
+    let called = 0;
     equals(Option.empty, Option.empty.flatMap(() => Option.optionLazy(() => {
-      x++;
+      called++;
       return 3;
     })));
-    chai.expect(x).to.equals(0);
+    chai.expect(called).to.equals(0);
   });
 
   it('getOr accepts a null value', () => {
@@ -113,8 +117,16 @@ describe('Option', () => {
 
   });
 
-  it('get throws TypeError if called from an empty option', () => {
-    chai.expect(() => Option.empty.get()).to.throw(TypeError);
+  describe('get', () => {
+
+    it('returns value', () => {
+      chai.expect(Option.some('abc').get()).to.equal('abc');
+    });
+
+    it('throws TypeError if called from an empty option', () => {
+      chai.expect(() => Option.empty.get()).to.throw(TypeError);
+    });
+
   });
 
   describe('toArray', () => {
@@ -169,7 +181,7 @@ describe('Option', () => {
 
   describe('optionLazy', () => {
 
-    it('evaluates once', () => {
+    it('evaluates once and returns truthy value', () => {
       let called = 0;
       const op = Option.optionLazy(() => {
         called++;
@@ -181,6 +193,185 @@ describe('Option', () => {
       chai.expect(arr1).to.contain(1);
       chai.expect(arr2).to.contain(1);
       chai.expect(called).to.equal(1);
+    });
+
+    it('evaluates once and returns empty for falsy value', () => {
+      let called = 0;
+      const op = Option.optionLazy(() => {
+        called++;
+        return null;
+      });
+      chai.expect(called).to.equal(0);
+      const arr1 = op.toArray();
+      const arr2 = op.toArray();
+      chai.expect(arr1.length).to.equal(0);
+      chai.expect(arr2.length).to.equal(0);
+      chai.expect(called).to.equal(1);
+    });
+
+  });
+
+  describe('toArray', () => {
+
+    it('returns an array of one value when the option has a value', () => {
+      chai.expect(Option.some(3).toArray()).to.deep.equals([3]);
+    });
+
+    it('returns an empty array when the option is empty', () => {
+      chai.expect(Option.empty.toArray().length).to.equal(0);
+    });
+
+  });
+
+  describe('option', () => {
+
+    it('returns empty option if null value', () => {
+      chai.expect(Option.option(null).isEmpty()).to.be.true;
+    });
+
+    it('returns empty option if undefined value', () => {
+      chai.expect(Option.option(undefined).isEmpty()).to.be.true;
+    });
+
+  });
+
+  describe('some', () => {
+
+    it('returns filled option if null value', () => {
+      chai.expect(Option.some(null).isDefined()).to.be.true;
+    });
+
+    it('returns filled option if undefined value', () => {
+      chai.expect(Option.some(undefined).isDefined()).to.be.true;
+    });
+
+  });
+
+  describe('truthy', () => {
+
+    it('returns empty option if null value', () => {
+      chai.expect(Option.some(null).truthy().isEmpty()).to.be.true;
+    });
+
+    it('returns filled option if undefined value', () => {
+      chai.expect(Option.some(undefined).truthy().isEmpty()).to.be.true;
+    });
+
+  });
+
+  describe('keep', () => {
+
+    it('does not evaluate if false predicate', () => {
+      let called = 0;
+      chai.expect(Option.someLazy(() => {
+        called++;
+        return 3;
+      }).keep(false).isEmpty()).to.be.true;
+      chai.expect(called).to.equal(0);
+    });
+
+    it('does evaluate if true predicate', () => {
+      let called = 0;
+      chai.expect(Option.someLazy(() => {
+        called++;
+        return 3;
+      }).keep(true).isDefined()).to.be.true;
+      chai.expect(called).to.equal(1);
+    });
+
+  });
+
+  describe('orElse', () => {
+
+    it('keeps option if already has a value', () => {
+      chai.expect(Option.some(3).orElse(Option.some(4)).get()).to.equal(3);
+    });
+
+    it('uses other option if it did not have a value', () => {
+      chai.expect(Option.none<number>().orElse(Option.some(4)).get()).to.equal(4);
+    });
+
+  });
+
+  describe('forEach', () => {
+
+    it('calls side effect if there is a value', () => {
+      let called = false;
+      Option.some(null).forEach(() => {
+        called = true;
+      });
+      chai.expect(called).to.be.true;
+    });
+
+    it('does not call side effect if there is no value', () => {
+      let called = false;
+      Option.empty.forEach(() => {
+        called = true;
+      });
+      chai.expect(called).to.be.false;
+    });
+
+  });
+
+  describe('toEither', () => {
+
+    it('maps values to rights', () => {
+      const either = Option.some(3).toEither(4);
+      chai.expect(either.isRight()).to.be.true;
+      chai.expect(either.getRight()).to.equal(3);
+    });
+
+    it('maps empty to defined value', () => {
+      const either = Option.empty.toEither(4);
+      chai.expect(either.isLeft()).to.be.true;
+      chai.expect(either.getLeft()).to.equal(4);
+    });
+
+  });
+
+  describe('cata', () => {
+
+    it('maps for defined value', () => {
+      const result = Option.some(3).cata(v => v + 10, 0);
+      chai.expect(result).to.equal(13);
+    });
+
+    it('uses default for empty value', () => {
+      const result = Option.none<number>().cata(v => v + 10, 0);
+      chai.expect(result).to.equal(0);
+    });
+
+  });
+
+  describe('cataLazy', () => {
+
+    it('maps for defined value and does not call default', () => {
+      let called = false;
+      const result = Option.some(3).cataLazy(v => v + 10, () => {
+        called = true;
+        return 0;
+      });
+      chai.expect(result).to.equal(13);
+      chai.expect(called).to.be.false;
+    });
+
+    it('uses default for empty value', () => {
+      const result = Option.none<number>().cataLazy(v => v + 10, () => 42);
+      chai.expect(result).to.equal(42);
+    });
+
+  });
+
+  describe('flatten', () => {
+
+    it('reduces two Option to one', () => {
+      const op = Option.some(Option.some(33));
+      equals(Option.some(33), Option.flatten(op));
+    });
+
+    it('works for simple Option', () => {
+      const op = Option.some(33);
+      equals(Option.some(33), Option.flatten(op));
     });
 
   });

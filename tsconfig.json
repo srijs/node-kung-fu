@@ -26,6 +26,7 @@
     "placeOpenBraceOnNewLineForControlBlocks": false
   },
   "exclude": [
+    "coverage",
     "node_modules",
     "out",
     "typings/browser",

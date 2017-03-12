@@ -4,10 +4,13 @@
   "description": "Functional Standard Library",
   "main": "out/index.js",
   "scripts": {
-    "build": "tsc && npm run lint",
+    "build": "npm run compile && npm run fmt && npm run lint",
+    "compile": "tsc",
     "prepublish": "npm run build",
-    "lint": "tslint -c tslint.json 'lib/**/*.ts'",
-    "test": "npm run build && mocha out/**/*-spec.js --recursive"
+    "fmt": "tsfmt -r",
+    "lint": "tslint --project './tsconfig.json' --type-check -c tslint.json 'lib/**/*.ts'",
+    "coverage": "ts-node node_modules/istanbul/lib/cli.js cover -e .ts -e .js -x '*.d.ts' -x '*-spec.ts' _mocha -- `find ./lib -name '*-spec.ts' -print`",
+    "test": "npm run build && mocha --require ts-node/register lib/**/*-spec.ts --recursive"
   },
   "author": "Sam Rijs",
   "license": "MIT",
@@ -20,9 +23,13 @@
     "@types/mocha": "^2.2.39",
     "@types/node": "^6.0.62",
     "chai": "^3.5.0",
+    "istanbul": "1.1.0-alpha.1",
     "mocha": "^3.0.0",
+    "ts-node": "^2.1.0",
     "tslint": "^4.4.2",
-    "typescript": "^2.0.0"
+    "tslint-microsoft-contrib": "^4.0.0",
+    "typescript": "^2.0.0",
+    "typescript-formatter": "^5.0.1"
   },
   "bugs": {
     "url": "https://github.com/srijs/node-kung-fu/issues"

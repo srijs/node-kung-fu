@@ -1,5 +1,15 @@
 export class Pair<A, B> {
-  constructor(public first: A, public second: B) {}
+
+
+  constructor(private readonly _first: A, private readonly _second: B) {}
+
+  get first(): A {
+    return this._first;
+  }
+
+  get second(): B {
+    return this._second;
+  }
 
   mapFirst<C>(f: (first: A) => C): Pair<C, B> {
     return this.map(f, b => b);
