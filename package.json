@@ -1,12 +1,16 @@
 {
   "name": "kung-fu",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Functional Standard Library",
   "main": "out/index.js",
   "scripts": {
-    "build": "typings install && tsc",
+    "build": "npm run compile && npm run fmt && npm run lint",
+    "compile": "tsc",
     "prepublish": "npm run build",
-    "test": "mocha out/**/*-spec.js --recursive"
+    "fmt": "tsfmt -r",
+    "lint": "tslint --project './tsconfig.json' --type-check -c tslint.json 'lib/**/*.ts'",
+    "coverage": "ts-node node_modules/istanbul/lib/cli.js cover -e .ts -e .js -x '*.d.ts' -x '*-spec.ts' _mocha -- `find ./lib -name '*-spec.ts' -print`",
+    "test": "npm run build && mocha --require ts-node/register lib/**/*-spec.ts --recursive"
   },
   "author": "Sam Rijs",
   "license": "MIT",
@@ -15,12 +19,18 @@
     "url": "git@github.com:srijs/node-kung-fu.git"
   },
   "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.39",
+    "@types/node": "^6.0.62",
     "chai": "^3.5.0",
-    "mocha": "^2.5.3",
-    "typescript": "^1.8.7",
-    "typings": "^1.0.4"
+    "istanbul": "1.1.0-alpha.1",
+    "mocha": "^3.0.0",
+    "ts-node": "^2.1.0",
+    "tslint": "^4.4.2",
+    "tslint-microsoft-contrib": "^4.0.0",
+    "typescript": "^2.0.0",
+    "typescript-formatter": "^5.0.1"
   },
-  "typings": "./out/index.d.ts",
   "bugs": {
     "url": "https://github.com/srijs/node-kung-fu/issues"
   }

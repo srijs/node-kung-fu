@@ -1,14 +1,18 @@
 import {Option} from './option';
 
 export class PartialFunction<From, To> {
-  constructor(public call: (from: From) => Option<To>) {}
+  constructor(private readonly _call: (from: From) => Option<To>) {}
+
+  call(from: From): Option<To> {
+    return this._call(from);
+  }
 
   static empty<From, To>(): PartialFunction<From, To> {
-    return new PartialFunction<From, To>((from: From) => Option.none<To>());
+    return new PartialFunction<From, To>(() => Option.none<To>());
   }
 
   static identity<T>(): PartialFunction<T, T> {
-    return new PartialFunction((t: T) => Option.some(t));
+    return new PartialFunction((t: T) => Option.option(t));
   }
 
   and(other: PartialFunction<From, To>): PartialFunction<From, To> {
@@ -28,13 +32,12 @@ export class PartialFunction<From, To> {
     });
   }
 
-  static concat<From, To>(
-    fs: Array<PartialFunction<From, To>>
-  ): PartialFunction<From, To> {
+  static concat<From, To>(fs: Array<PartialFunction<From, To>>): PartialFunction<From, To> {
     return fs.reduce((f, g) => f.and(g), PartialFunction.empty<From, To>());
   }
 
-  static asInstanceOf<T>(con: {new(...args: any[]): T}): PartialFunction<Object, T> {
+  // tslint:disable-next-line:no-any
+  static asInstanceOf<T>(con: {new (...args: any[]): T}): PartialFunction<Object, T> {
     return new PartialFunction((from: Object) => {
       if (from instanceof con) {
         return Option.some(from);
