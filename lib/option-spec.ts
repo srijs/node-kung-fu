@@ -49,6 +49,19 @@ describe('Option', () => {
       }));
     });
 
+    it('works twice in a row', () => {
+      const op = Option.some(4).flatMap(n => Option.some(n * 2)).flatMap(n => Option.some(n * 2));
+      equals(Option.some(16), op);
+    });
+
+    it('recurses well', () => {
+      let op = Option.some(0);
+      for (let i = 0; i < 10000; i++) {
+        op = op.flatMap(n => Option.some(n + 1));
+      }
+      equals(Option.some(10000), op);
+    });
+
   });
 
   it('someLazy does not execute if not needed', () => {
@@ -293,6 +306,24 @@ describe('Option', () => {
 
   });
 
+  describe('orElseLazy', () => {
+
+    it('keeps option if already has a value and does not call else path', () => {
+      let called = false;
+      const op = Option.some(3).orElseLazy(() => {
+        called = true;
+        return Option.some(4);
+      });
+      chai.expect(op.get()).to.equal(3);
+      chai.expect(called).to.be.false;
+    });
+
+    it('uses other option if it did not have a value', () => {
+      chai.expect(Option.none<number>().orElseLazy(() => Option.some(4)).get()).to.equal(4);
+    });
+
+  });
+
   describe('forEach', () => {
 
     it('calls side effect if there is a value', () => {
@@ -372,6 +403,48 @@ describe('Option', () => {
     it('works for simple Option', () => {
       const op = Option.some(33);
       equals(Option.some(33), Option.flatten(op));
+    });
+
+  });
+
+  describe('cataOption', () => {
+
+    it('recurses well', () => {
+      const none = Option.none<number>();
+      let op = none;
+      for (let i = 0; i < 10000; i++) {
+        op = op.cataOption(n => Option.some(n + 1), none);
+      }
+      equals(none, op);
+    });
+
+  });
+
+  describe('iterator', () => {
+
+    it('returns no elements for an empty option', () => {
+      chai.expect(Array.from(Option.empty).length).to.equal(0);
+    });
+
+    it('returns the value inside the option', () => {
+      const arr = Array.from(Option.some(3));
+      chai.expect(arr.length).to.equal(1);
+      chai.expect(arr).to.contain(3);
+    });
+
+  });
+
+  describe('all', () => {
+
+    it('construct an option with an array of elements', () => {
+      const arr = [Option.some(1), 2, Option.empty, 4, Option.some(5), Option.empty, 7, Option.empty, 9];
+      const op = Option.all(arr);
+      chai.expect(op.isDefined()).to.be.true;
+      chai.expect(op.get()).to.deep.equal([1, 2, 4, 5, 7, 9]);
+    });
+
+    it('returns empty if the array does not have elements', () => {
+      chai.expect(Option.all([Option.empty, Option.empty]).isEmpty()).to.be.true;
     });
 
   });

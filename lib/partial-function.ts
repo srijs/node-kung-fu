@@ -16,7 +16,7 @@ export class PartialFunction<From, To> {
   }
 
   and(other: PartialFunction<From, To>): PartialFunction<From, To> {
-    return new PartialFunction((from: From) => this.call(from).caseOf<Option<To>>({
+    return new PartialFunction((from: From) => this.call(from).caseOf({
       some: (to) => Option.some(to),
       none: () => other.call(from)
     }));

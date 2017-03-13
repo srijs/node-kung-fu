@@ -1,53 +1,79 @@
 import {Either} from './either';
 
-export type OptionPattern<T, X> = {
-  none: () => X,
-  some: (t: T) => X
+export type OptionPattern<T, S, N> = {
+  none: () => N,
+  some: (t: T) => S
 };
 
-export class Option<T> {
+interface CaseOf<T> {
+  run<S, N>(pattern: OptionPattern<T, S, N>): S | N;
+}
 
-  constructor(private readonly _caseOf: <X>(pattern: OptionPattern<T, X>) => X) {}
+class SomeCaseOf<T> implements CaseOf<T> {
+
+  constructor(private readonly _t: T) {}
+
+  run<S, N>(pattern: OptionPattern<T, S, N>): S {
+    return pattern.some(this._t);
+  }
+}
+
+class NoneCaseOf<T> implements CaseOf<T> {
+
+  constructor() {}
+
+  run<S, N>(pattern: OptionPattern<T, S, N>): N {
+    return pattern.none();
+  }
+}
+
+export class Option<T> implements Iterable<T> {
+
+  private constructor(private readonly _caseOf: CaseOf<T>) {}
 
   static some<T>(t: T): Option<T> {
-    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => {
-      return pattern.some(t);
-    });
+    return new Option<T>(new SomeCaseOf(t));
   }
 
   static someLazy<T>(f: () => T): Option<T> {
-    let memoize: T;
-    return new Option<T>(<X>(pattern: OptionPattern<T, X>) => {
-      if (!memoize) {
-        memoize = f();
-      }
-      return pattern.some(memoize);
-    });
+    return Option.none<T>().orElseLazy(() => Option.some(f()));
   }
 
   static none<T>(): Option<T> {
-    return new Option(<X>(pattern: OptionPattern<T, X>) => pattern.none());
+    return new Option(new NoneCaseOf<T>());
   }
 
-  static empty: Option<never> = Option.none<never>();
+  static readonly empty: Option<never> = Option.none<never>();
 
-  static option<T>(t: T): Option<T> {
+  static option<T>(t: T | null | undefined): Option<T> {
     return t ? Option.some(t) : Option.empty;
   }
 
-  static optionLazy<T>(f: () => T): Option<T> {
-    return Option.some(undefined).flatMap(() => {
-      const t = f();
-      if (t) {
-        return Option.some(t);
-      } else {
-        return Option.empty;
-      }
-    });
+  static optionLazy<T>(f: () => T | null | undefined): Option<T> {
+    return Option.someLazy<T>(f as () => T).truthy();
   }
 
-  caseOf<X>(pattern: OptionPattern<T, X>): X {
-    return this._caseOf(pattern);
+  static all<T>(arr: Iterable<Option<T> | T>): Option<Array<T>> {
+    return Option.empty.orElseLazy<Array<T>>((() => {
+      const values: Array<T> = [];
+      for (let elem of arr) {
+        if (elem instanceof Option) {
+          if (elem.isDefined()) {
+            values.push(elem.get());
+          }
+        } else {
+          values.push(elem);
+        }
+      }
+      if (values.length > 0) {
+        return Option.some(values);
+      }
+      return Option.empty;
+    }));
+  }
+
+  caseOf<U, V>(pattern: OptionPattern<T, U, V>): U | V {
+    return this._caseOf.run(pattern);
   }
 
   isDefined(): boolean {
@@ -65,14 +91,14 @@ export class Option<T> {
   }
 
   getOr<U>(def: U): T | U {
-    return this.caseOf<T | U>({
+    return this.caseOf<T, U>({
       none: () => def,
       some: (t) => t
     });
   }
 
   getOrLazy<U>(def: () => U): T | U {
-    return this.caseOf<T | U>({
+    return this.caseOf<T, U>({
       none: () => def(),
       some: (t) => t
     });
@@ -96,7 +122,7 @@ export class Option<T> {
   }
 
   flatMap<U>(f: (t: T) => Option<U>): Option<U> {
-    return this.cataOption<U>(f, () => Option.empty);
+    return this.cataOption<U, never>(f, Option.empty);
   }
 
   filter(pred: (t: T) => boolean): Option<T> {
@@ -118,12 +144,12 @@ export class Option<T> {
     });
   }
 
-  orElse<U extends T>(other: Option<U>): Option<T> {
-    return this.orElseLazy(() => other);
+  orElse<U>(other: Option<U>): Option<T | U> {
+    return this.cataOption<T, U>(Option.some, other);
   }
 
-  orElseLazy<U extends T>(other: () => Option<U>): Option<T> {
-    return this.cataOption<T>(Option.some, other);
+  orElseLazy<U>(other: () => Option<U>): Option<T | U> {
+    return this.cataOption<T, U>(Option.some, Option.some(undefined).flatMap(other));
   }
 
   forEach(f: (t: T) => void): void {
@@ -133,30 +159,18 @@ export class Option<T> {
     });
   }
 
-  cataOption<U>(f: (t: T) => Option<U>, other: () => Option<U>): Option<U> {
-    let memoize: Option<U>;
-    return new Option<U>(<X>(newpattern: OptionPattern<U, X>) => {
-      if (!memoize) {
-        memoize = this.caseOf({
-          none: () => other(),
-          some: (t) => f(t)
-        });
-      }
-      return memoize.caseOf({
-        some: (val: U) => newpattern.some(val),
-        none: () => newpattern.none()
-      });
-    });
+  cataOption<U, V>(f: (t: T) => Option<U>, other: Option<V>): Option<U | V> {
+    return new Option<U | V>(new CataCaseOf<T, U, V>(this._caseOf, f, other));
   }
 
-  cata<U>(f: (t: T) => U, def: U): U {
+  cata<U, V>(f: (t: T) => U, def: V): U | V {
     return this.caseOf({
       none: () => def,
       some: (t) => f(t)
     });
   }
 
-  cataLazy<U>(f: (t: T) => U, def: () => U): U {
+  cataLazy<U, V>(f: (t: T) => U, def: () => V): U | V {
     return this.caseOf({
       none: () => def(),
       some: (t) => f(t)
@@ -177,6 +191,10 @@ export class Option<T> {
     });
   }
 
+  [Symbol.iterator](): Iterator<T> {
+    return new OptionIterator(this);
+  }
+
   static flatten<T>(op: Option<T | Option<T>>): Option<T> {
     return op.flatMap(ot => {
       if (ot instanceof Option) {
@@ -186,4 +204,76 @@ export class Option<T> {
       }
     });
   }
+
+}
+
+class OptionIterator<T> implements Iterator<T> {
+
+  private _consumed = false;
+
+  constructor(private readonly _op: Option<T>) {}
+
+  next(): IteratorResult<T> {
+    if (this._consumed || this._op.isEmpty()) {
+      return {done: true} as IteratorResult<T>;
+    } else {
+      this._consumed = true;
+      return {value: this._op.get(), done: false};
+    }
+  }
+
+}
+
+// tslint:disable-next-line:no-any
+type WildCardCataCaseOf = CataCaseOf<any, any, any>;
+
+class CataCaseOf<T, U, V> implements CaseOf<U | V> {
+
+  private _memoize: Option<U | V>;
+
+  constructor(
+    private readonly _parentCaseOf: CaseOf<T>,
+    private readonly _f: (t: T) => Option<U>,
+    private readonly _other: Option<V>) {
+  }
+
+  run<S, N>(pattern: OptionPattern<U, S, N>): S | N {
+    if (!this._memoize) {
+      if (this._parentCaseOf instanceof CataCaseOf) {
+        this._memoize = this._iterate(this._parentCaseOf).caseOf({
+          none: () => this._other,
+          some: (t) => this._f(t)
+        });
+      } else {
+        this._memoize = this._resolve();
+      }
+    }
+    return this._memoize.caseOf(pattern);
+  }
+
+  private _resolve(): Option<U | V> {
+    return this._parentCaseOf.run({
+      none: () => this._other,
+      some: (t) => this._f(t)
+    });
+  }
+
+  private _iterate(cataCaseOf: WildCardCataCaseOf): Option<T> {
+    let arr: Array<WildCardCataCaseOf> = [cataCaseOf];
+    let currentCaseOf = cataCaseOf;
+    while (currentCaseOf._parentCaseOf instanceof CataCaseOf) {
+      currentCaseOf = currentCaseOf._parentCaseOf;
+      arr.push(currentCaseOf);
+    }
+    const last = arr[arr.length - 1];
+    let current = last._resolve();
+    for (let i = arr.length - 2; i >= 0; i--) {
+      current = current.caseOf({
+        none: () => arr[i]._other,
+        some: (t) => arr[i]._f(t)
+      });
+    }
+    return current;
+  }
+
 }

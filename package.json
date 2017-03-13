@@ -9,8 +9,10 @@
     "prepublish": "npm run build",
     "fmt": "tsfmt -r",
     "lint": "tslint --project './tsconfig.json' --type-check -c tslint.json 'lib/**/*.ts'",
-    "coverage": "ts-node node_modules/istanbul/lib/cli.js cover -e .ts -e .js -x '*.d.ts' -x '*-spec.ts' _mocha -- `find ./lib -name '*-spec.ts' -print`",
-    "test": "npm run build && mocha --require ts-node/register lib/**/*-spec.ts --recursive"
+    "coverage": "node node_modules/istanbul/lib/cli.js cover -e .ts -x '*.d.ts' -x '*-spec.ts' _mocha -- --compilers ts:ts-node/register `find ./lib -name '*-spec.ts' -print`",
+    "check-coverage": "ts-node node_modules/istanbul/lib/cli.js check-coverage",
+    "test-only": "mocha --require ts-node/register lib/**/*-spec.ts --recursive",
+    "test": "npm run build && npm run test-only"
   },
   "author": "Sam Rijs",
   "license": "MIT",
