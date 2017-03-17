@@ -3,9 +3,15 @@
     "declaration": true,
     "module": "commonjs",
     "target": "es6",
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "outDir": "out",
     "rootDir": "lib",
+    "strictNullChecks": true,
     "sourceMap": true
   },
   "formatCodeOptions": {
@@ -23,12 +29,8 @@
     "placeOpenBraceOnNewLineForControlBlocks": false
   },
   "exclude": [
+    "coverage",
     "node_modules",
-    "out",
-    "typings/browser",
-    "typings/browser.d.ts"
-  ],
-  "references": [
-    "typings/main.d.ts"
+    "out"
   ]
 }
